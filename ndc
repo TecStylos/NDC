@@ -13,7 +13,6 @@ from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QLinearGradient
 
 LOG_PATH = os.path.expanduser("~/.cache/ndc.log")
 AUTO_DISPLAY_PATH = os.path.expanduser("~/.config/niri/ndc.kdl")
-HISTORY_PATH = os.path.expanduser("~/.config/ndc/history.json")
 
 def log(msg):
     try:
@@ -846,7 +845,6 @@ class MainWindow(QMainWindow):
         self.canvas.update()
 
     def generate_kdl_content(self):
-        daemon_path = os.path.expanduser("~/.local/bin/ndc-daemon")
         bin_path = os.path.expanduser("~/.local/bin/ndc")
         
         lines = [
@@ -854,9 +852,6 @@ class MainWindow(QMainWindow):
             "// NDC - Niri Display Configurator Settings",
             "// This file is automatically managed by NDC.",
             "// ==================================================",
-            "",
-            "// --- Daemon Auto-start ---",
-            f'spawn-at-startup "{daemon_path}"',
             "",
             "// --- App Keybind ---",
             "binds {",
@@ -922,31 +917,7 @@ class MainWindow(QMainWindow):
         log("Confirm changes clicked")
         self.timer.stop()
         self.confirming = False
-        self.save_to_history()
         self.close()
-
-    def save_to_history(self):
-        history_dir = os.path.dirname(HISTORY_PATH)
-        try:
-            os.makedirs(history_dir, exist_ok=True)
-            history = []
-            if os.path.exists(HISTORY_PATH):
-                with open(HISTORY_PATH, "r") as f:
-                    history = json.load(f)
-            
-            updated = False
-            for d in self.displays:
-                sig = f"{d.make}-{d.model}-{d.serial}"
-                if sig not in history:
-                    history.append(sig)
-                    updated = True
-            
-            if updated:
-                with open(HISTORY_PATH, "w") as f:
-                    json.dump(history, f, indent=4)
-                log("Saved displays to history.json")
-        except Exception as e:
-            log(f"Error saving to history.json: {e}")
 
     def revert_changes(self):
         log("Reverting changes")

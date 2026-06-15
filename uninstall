@@ -2,7 +2,6 @@
 set -e
 
 BIN_PATH="$HOME/.local/bin/ndc"
-DAEMON_PATH="$HOME/.local/bin/ndc-daemon"
 NIRI_CONFIG_DIR="$HOME/.config/niri"
 NIRI_CONFIG="$NIRI_CONFIG_DIR/config.kdl"
 NIRI_NDC_KDL="$NIRI_CONFIG_DIR/ndc.kdl"
@@ -10,19 +9,11 @@ HISTORY_DIR="$HOME/.config/ndc"
 
 echo "=== Uninstalling NDC (Niri Display Configurator) ==="
 
-# 1. Stop daemon if running
-if pgrep -f "$DAEMON_PATH" > /dev/null; then
-    echo "Stopping NDC hotplug daemon..."
-    pkill -f "$DAEMON_PATH" || true
+# 1. Remove binaries
+if [ -f "$BIN_PATH" ]; then
+    echo "Removing executable $BIN_PATH..."
+    rm "$BIN_PATH"
 fi
-
-# 2. Remove binaries
-for b in "$BIN_PATH" "$DAEMON_PATH"; do
-    if [ -f "$b" ]; then
-        echo "Removing executable $b..."
-        rm "$b"
-    fi
-done
 
 # 3. Remove include from config.kdl
 if [ -f "$NIRI_CONFIG" ]; then
