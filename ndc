@@ -224,6 +224,13 @@ class DisplayCanvas(QWidget):
                         snap_x = other.x + other.width - self.dragged_display.width
                         self.active_snap_x_line = other.x + other.width
 
+                    # 5. Center-to-Center alignment (Vertical centers)
+                    dx_center = (other.x + other.width / 2.0) - (new_x + self.dragged_display.width / 2.0)
+                    if abs(dx_center) < threshold and abs(dx_center) < abs(best_dx):
+                        best_dx = dx_center
+                        snap_x = other.x + other.width / 2.0 - self.dragged_display.width / 2.0
+                        self.active_snap_x_line = other.x + other.width / 2.0
+
                     # --- Y Snapping ---
                     dy = other.y + other.height - new_y
                     if abs(dy) < threshold and abs(dy) < abs(best_dy):
@@ -248,6 +255,13 @@ class DisplayCanvas(QWidget):
                         best_dy = dy
                         snap_y = other.y + other.height - self.dragged_display.height
                         self.active_snap_y_line = other.y + other.height
+
+                    # 5. Center-to-Center alignment (Horizontal centers)
+                    dy_center = (other.y + other.height / 2.0) - (new_y + self.dragged_display.height / 2.0)
+                    if abs(dy_center) < threshold and abs(dy_center) < abs(best_dy):
+                        best_dy = dy_center
+                        snap_y = other.y + other.height / 2.0 - self.dragged_display.height / 2.0
+                        self.active_snap_y_line = other.y + other.height / 2.0
                 
                 if abs(best_dx) < threshold:
                     new_x = snap_x

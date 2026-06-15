@@ -4,6 +4,7 @@ import os
 import json
 import subprocess
 import time
+import socket
 
 LOG_PATH = os.path.expanduser("~/.cache/ndc-daemon.log")
 HISTORY_PATH = os.path.expanduser("~/.config/ndc/history.json")
@@ -71,27 +72,41 @@ def main():
     time.sleep(2.0)
     check_outputs()
     
-    # Connect to Niri event-stream
+    # Connect to Niri event-stream directly via socket
+    niri_socket = os.environ.get("NIRI_SOCKET")
+    if not niri_socket:
+        log("NIRI_SOCKET environment variable not set, exiting.")
+        sys.exit(1)
+
+    log(f"Connecting to Niri socket: {niri_socket}")
     try:
-        proc = subprocess.Popen(["niri", "msg", "--json", "event-stream"], stdout=subprocess.PIPE, text=True, bufsize=1)
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(niri_socket)
+        s.sendall(b'"EventStream"\n')
+        f = s.makefile()
     except Exception as e:
-        log(f"Failed to start niri event-stream: {e}")
+        log(f"Failed to connect to Niri socket event-stream: {e}")
         sys.exit(1)
         
     while True:
-        line = proc.stdout.readline()
-        if not line:
-            log("Niri event stream disconnected, exiting.")
-            break
-            
         try:
-            event = json.loads(line.strip())
-            if "OutputsChanged" in event:
-                log("Received OutputsChanged event.")
+            line = f.readline()
+            if not line:
+                log("Niri event stream disconnected, exiting.")
+                break
+            
+            line_str = line.strip()
+            if not line_str:
+                continue
+                
+            event = json.loads(line_str)
+            if isinstance(event, dict) and "OutputsChanged" in event:
+                log("Received OutputsChanged event via socket.")
                 time.sleep(1.0)
                 check_outputs()
-        except Exception:
-            pass
+        except Exception as e:
+            log(f"Error reading/parsing event: {e}")
+            time.sleep(1.0)
 
 if __name__ == "__main__":
     main()

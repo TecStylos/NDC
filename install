@@ -158,11 +158,11 @@ if [ -f "$NIRI_CONFIG" ]; then
 fi
 
 # 6. Ensure the daemon starts up immediately
-if pgrep -f "ndc-daemon" > /dev/null; then
+if pgrep -f "$DAEMON_PATH" > /dev/null; then
     echo "Restarting active NDC hotplug daemon..."
-    pkill -f "ndc-daemon" || true
+    pkill -f "$DAEMON_PATH" || true
 fi
 echo "Launching NDC hotplug daemon..."
-"$DAEMON_PATH" > /dev/null 2>&1 &
+setsid "$DAEMON_PATH" > /home/tecstylos/nohup-install.log 2>&1 &
 
 echo "NDC installed successfully! Press Mod+P to run."

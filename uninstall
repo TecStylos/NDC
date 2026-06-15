@@ -11,9 +11,9 @@ HISTORY_DIR="$HOME/.config/ndc"
 echo "=== Uninstalling NDC (Niri Display Configurator) ==="
 
 # 1. Stop daemon if running
-if pgrep -f "ndc-daemon" > /dev/null; then
+if pgrep -f "$DAEMON_PATH" > /dev/null; then
     echo "Stopping NDC hotplug daemon..."
-    pkill -f "ndc-daemon" || true
+    pkill -f "$DAEMON_PATH" || true
 fi
 
 # 2. Remove binaries
