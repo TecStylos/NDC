@@ -2,65 +2,53 @@
 set -e
 
 BIN_PATH="$HOME/.local/bin/ndc"
+DAEMON_PATH="$HOME/.local/bin/ndc-daemon"
 NIRI_CONFIG_DIR="$HOME/.config/niri"
 NIRI_CONFIG="$NIRI_CONFIG_DIR/config.kdl"
-NIRI_RULES="$NIRI_CONFIG_DIR/cfg/rules.kdl"
-NIRI_DISPLAY="$NIRI_CONFIG_DIR/cfg/display.kdl"
-NIRI_AUTO_DISPLAY="$NIRI_CONFIG_DIR/cfg/auto-display.kdl"
+NIRI_NDC_KDL="$NIRI_CONFIG_DIR/ndc.kdl"
+HISTORY_DIR="$HOME/.config/ndc"
 
 echo "=== Uninstalling NDC (Niri Display Configurator) ==="
 
-# 1. Remove binary
-if [ -f "$BIN_PATH" ]; then
-    echo "Removing executable $BIN_PATH..."
-    rm "$BIN_PATH"
+# 1. Stop daemon if running
+if pgrep -f "ndc-daemon" > /dev/null; then
+    echo "Stopping NDC hotplug daemon..."
+    pkill -f "ndc-daemon" || true
 fi
 
-# 2. Remove keybind from config.kdl
+# 2. Remove binaries
+for b in "$BIN_PATH" "$DAEMON_PATH"; do
+    if [ -f "$b" ]; then
+        echo "Removing executable $b..."
+        rm "$b"
+    fi
+done
+
+# 3. Remove include from config.kdl
 if [ -f "$NIRI_CONFIG" ]; then
-    echo "Removing keybind from config.kdl..."
+    echo "Removing include \"ndc.kdl\" statement from config.kdl..."
     python3 -c "
 with open('$NIRI_CONFIG', 'r') as f:
     lines = f.readlines()
-new_lines = [l for l in lines if '$BIN_PATH' not in l]
+new_lines = [l for l in lines if 'include \"ndc.kdl\"' not in l]
 with open('$NIRI_CONFIG', 'w') as f:
     f.writelines(new_lines)
 "
 fi
 
-# 3. Remove window rule from rules.kdl
-if [ -f "$NIRI_RULES" ]; then
-    echo "Removing window rule from rules.kdl..."
-    python3 -c "
-import re
-with open('$NIRI_RULES', 'r') as f:
-    content = f.read()
-# Remove the window-rule block matching niri-display-helper
-pattern = r'\n\s*window-rule\s*\{\s*match\s+app-id=\"niri-display-helper\"\s*open-floating\s+true\s*\}'
-new_content = re.sub(pattern, '', content)
-pattern_fallback = r'window-rule\s*\{\s*match\s+app-id=\"niri-display-helper\"\s*open-floating\s+true\s*\}'
-new_content = re.sub(pattern_fallback, '', new_content)
-with open('$NIRI_RULES', 'w') as f:
-    f.write(new_content)
-"
+# 4. Remove isolated ndc.kdl file
+if [ -f "$NIRI_NDC_KDL" ]; then
+    echo "Removing isolated configuration $NIRI_NDC_KDL..."
+    rm "$NIRI_NDC_KDL"
 fi
 
-# 4. Remove include statement from display.kdl
-if [ -f "$NIRI_DISPLAY" ]; then
-    echo "Removing include statement from display.kdl..."
-    python3 -c "
-with open('$NIRI_DISPLAY', 'r') as f:
-    lines = f.readlines()
-new_lines = [l for l in lines if 'include \"auto-display.kdl\"' not in l]
-with open('$NIRI_DISPLAY', 'w') as f:
-    f.writelines(new_lines)
-"
+# 5. Remove history and configuration logs
+if [ -d "$HISTORY_DIR" ]; then
+    echo "Removing configuration history under $HISTORY_DIR..."
+    rm -rf "$HISTORY_DIR"
 fi
 
-# 5. Remove auto-display.kdl
-if [ -f "$NIRI_AUTO_DISPLAY" ]; then
-    echo "Removing auto-display.kdl..."
-    rm "$NIRI_AUTO_DISPLAY"
-fi
+# 6. Clean logs
+rm -f "$HOME/.cache/ndc.log" "$HOME/.cache/ndc-daemon.log"
 
 echo "NDC uninstalled successfully!"

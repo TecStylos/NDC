@@ -14,18 +14,19 @@ It opens as a floating popup window showing a visual layout of your current disp
 - **Shift to Bypass Snapping**: Hold down the **Shift** key while dragging to disable snapping for free-form placement.
 - **Coordinate Inputs**: Configure positions manually with `X` and `Y` logical coordinate fields with real-time bidirectional syncing.
 - **Full Display Parameter Control**:
-  - **Resolution & Refresh Rate**: Select from a dropdown populated with all available video modes queried dynamically from the compositor.
+  - **Resolution & Refresh Rate**: Select from a dropdown populated with all available video modes.
   - **Scale Factor**: Fine-tune custom scaling factors (e.g., `1.0`, `1.25`, `1.50`, etc.).
   - **Transform (Rotation)**: Select rotation options (`normal`, `90`, `180`, `270`, etc.) and watch the canvas aspect ratio update in real-time.
   - **Toggle Enabled State**: Easily toggle monitors on/off (translates to the Niri `off` directive).
 - **10-Second Safety Confirmation**: When applying a new layout, the configurator triggers a countdown safety check. If you don't confirm the new settings within 10 seconds (or if you close the window/press **Esc**), the configuration instantly rolls back to your last confirmed setup.
-- **Premium Styling**: Dark-mode aesthetic, glowing active states, responsive grid scaling, and custom styling.
+- **Background Hotplug Daemon**: A low-overhead event-driven daemon (`ndc-daemon`) runs in the background. It listens to compositor events and automatically opens the visual configurator when a display is connected which does not have an explicit configuration. Already configured displays from the past are tracked and will not trigger a popup.
+- **Clean Configuration Isolation**: Every configuration managed by NDC (display outputs, keybindings, window rules, and daemon autostart) is isolated inside a single file `~/.config/niri/ndc.kdl`. This file is then cleanly included in your main `config.kdl`, leaving your existing configuration files untouched.
 
 ---
 
 ## Installation
 
-Run the install script from the project root to install the binary to `~/.local/bin/ndc` and register it with your Niri keybindings (`Mod+P`):
+Run the install script from the project root to compile/copy the binaries to `~/.local/bin/` and configure Niri:
 
 ```bash
 chmod +x install
@@ -34,7 +35,7 @@ chmod +x install
 
 ## Uninstallation
 
-To completely remove NDC, revert all modifications to your Niri configuration files, and delete the local binaries, run the uninstall script:
+To completely remove NDC, stop the background daemon, delete the binaries, and clean up your configurations, run:
 
 ```bash
 chmod +x uninstall

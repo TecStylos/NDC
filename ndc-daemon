@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+import sys
+import os
+import json
+import subprocess
+import time
+
+LOG_PATH = os.path.expanduser("~/.cache/ndc-daemon.log")
+HISTORY_PATH = os.path.expanduser("~/.config/ndc/history.json")
+
+def log(msg):
+    try:
+        os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+        with open(LOG_PATH, "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
+def load_history():
+    if os.path.exists(HISTORY_PATH):
+        try:
+            with open(HISTORY_PATH, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            log(f"Error reading history.json: {e}")
+    return []
+
+def is_ndc_running():
+    try:
+        res = subprocess.run(["niri", "msg", "--json", "windows"], capture_output=True, text=True, check=True)
+        windows = json.loads(res.stdout)
+        return any(w.get("app_id") == "niri-display-helper" for w in windows)
+    except Exception as e:
+        log(f"Error checking if NDC is running: {e}")
+        return False
+
+def check_outputs():
+    log("Checking display outputs...")
+    try:
+        res = subprocess.run(["niri", "msg", "--json", "outputs"], capture_output=True, text=True, check=True)
+        outputs = json.loads(res.stdout)
+    except Exception as e:
+        log(f"Failed to query Niri outputs: {e}")
+        return
+
+    history = load_history()
+    new_display_found = False
+    
+    for name, info in outputs.items():
+        make = info.get("make") or "unknown"
+        model = info.get("model") or "unknown"
+        serial = info.get("serial") or "none"
+        sig = f"{make}-{model}-{serial}"
+        
+        if sig not in history:
+            log(f"New display connected: {name} ({sig})")
+            new_display_found = True
+            
+    if new_display_found:
+        if is_ndc_running():
+            log("NDC is already running, skipping launch.")
+        else:
+            log("Launching NDC...")
+            bin_path = os.path.expanduser("~/.local/bin/ndc")
+            subprocess.Popen([bin_path])
+
+def main():
+    log("NDC daemon started.")
+    
+    # Run an initial check on startup
+    time.sleep(2.0)
+    check_outputs()
+    
+    # Connect to Niri event-stream
+    try:
+        proc = subprocess.Popen(["niri", "msg", "--json", "event-stream"], stdout=subprocess.PIPE, text=True, bufsize=1)
+    except Exception as e:
+        log(f"Failed to start niri event-stream: {e}")
+        sys.exit(1)
+        
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            log("Niri event stream disconnected, exiting.")
+            break
+            
+        try:
+            event = json.loads(line.strip())
+            if "OutputsChanged" in event:
+                log("Received OutputsChanged event.")
+                time.sleep(1.0)
+                check_outputs()
+        except Exception:
+            pass
+
+if __name__ == "__main__":
+    main()
