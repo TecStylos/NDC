@@ -4,6 +4,8 @@ NDC (Niri Display Configurator) is a premium, visual display arrangement utility
 
 It opens as a floating popup window showing a visual layout of your current display configuration, allowing you to drag-and-drop, scale, rotate, enable, and align monitors with pixel-perfect snapping.
 
+NDC has been developed using Antigravity CLI 1.0.7 with Model Gemini 3.5 Flash (Medium)
+
 ---
 
 ## Features
