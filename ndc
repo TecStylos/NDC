@@ -753,16 +753,16 @@ class MainWindow(QMainWindow):
         self.confirm_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #38bdf8;")
         confirm_layout.addWidget(self.confirm_label)
         confirm_layout.addStretch()
-        
-        self.btn_revert = QPushButton("Revert Now")
-        self.btn_revert.setObjectName("revertButton")
-        self.btn_revert.clicked.connect(self.revert_changes)
-        confirm_layout.addWidget(self.btn_revert)
-        
+
         self.btn_confirm = QPushButton("Keep Changes")
         self.btn_confirm.setObjectName("confirmButton")
         self.btn_confirm.clicked.connect(self.confirm_changes)
         confirm_layout.addWidget(self.btn_confirm)
+        
+        self.btn_revert = QPushButton("Revert Changes Now")
+        self.btn_revert.setObjectName("revertButton")
+        self.btn_revert.clicked.connect(self.revert_changes)
+        confirm_layout.addWidget(self.btn_revert)
         
         self.stacked_controls.addWidget(self.confirm_widget)
         
